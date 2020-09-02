@@ -1,5 +1,5 @@
 {
-  "name": "aws-lambda-graphql",
+  "name": "aws-lambda-graphql-appsync",
   "version": "1.0.0-alpha.16",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
