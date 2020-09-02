@@ -12,3 +12,4 @@ export class ExtendableError extends Error {
 }
 
 export class ConnectionNotFoundError extends ExtendableError {}
+export class ConnectionRefusedError extends ExtendableError {}

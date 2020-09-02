@@ -11,6 +11,11 @@ export enum SERVER_EVENT_TYPES {
   GQL_ERROR = 'error',
   GQL_DATA = 'data',
   GQL_COMPLETE = 'complete',
+
+  /**
+   * AppSync
+   */
+  APPSYNC_START_ACK = 'start_ack',
 }
 
 /**
@@ -32,7 +37,7 @@ export interface GQLOperation {
   type: CLIENT_EVENT_TYPES.GQL_START;
 }
 
-export function isGQLOperation(event: any): event is GQLOperation {
+export function isGQLStartOperation(event: any): event is GQLOperation {
   return (
     event &&
     typeof event === 'object' &&
@@ -126,6 +131,31 @@ export interface GQLData {
   type: SERVER_EVENT_TYPES.GQL_DATA;
 }
 
+/**
+ * AppSync
+ */
+/**
+ * Server -> Client - start_ack indicates the subscription was successful
+ */
+export interface AppSyncStartAck {
+  /**
+   * Same ID as the ID of an operation that we are returning a result for
+   */
+  id: string;
+  type: SERVER_EVENT_TYPES.APPSYNC_START_ACK;
+}
+
+/**
+ * Server -> Client - if connection init or subscription registration fails or if a subscription is terminated from the server
+ */
+export interface AppSyncErrorEvent {
+  id?: string;
+  payload: {
+    errors: [{ errorType: string; message: string }];
+  };
+  type: SERVER_EVENT_TYPES.GQL_ERROR;
+}
+
 export type GQLClientAllEvents =
   | GQLConnectionInit
   | GQLOperation
@@ -135,4 +165,6 @@ export type GQLServerAllEvents =
   | GQLConnectionACK
   | GQLErrorEvent
   | GQLData
-  | GQLComplete;
+  | GQLComplete
+  | AppSyncStartAck
+  | AppSyncErrorEvent;

@@ -30,8 +30,9 @@ import {
   isGQLConnectionInit,
   isGQLStopOperation,
 } from './protocol';
-import { formatMessage } from './formatMessage';
+import { formatMessage, formatErrorMessage } from './formatMessage';
 import { execute, ExecutionParams } from './execute';
+import { ConnectionRefusedError } from './errors';
 
 interface ExtraGraphQLOptions extends GraphQLOptions {
   $$internal: IContext['$$internal'];
@@ -124,6 +125,10 @@ export interface ServerConfig<
      *
      */
     connectionEndpoint?: string;
+    /**
+     * Use AppSync pure websockets subscription protocol?
+     */
+    useAppSync?: boolean;
   };
 }
 
@@ -192,6 +197,7 @@ export class Server<
 
     this.connectionManager = connectionManager;
     this.eventProcessor = eventProcessor;
+    // eslint-disable-next-line no-console
     this.onError = onError || ((err) => console.error(err));
     this.subscriptionManager = subscriptionManager;
     this.subscriptionOptions = subscriptions;
@@ -273,6 +279,21 @@ export class Server<
   ) => Promise<APIGatewayProxyResult> {
     return async (event, lambdaContext) => {
       try {
+        // transform AppSync body
+        if (this.subscriptionOptions?.useAppSync && event.body) {
+          const e = JSON.parse(event.body);
+          if (e.payload && e.payload.data) {
+            // eslint-disable-next-line no-param-reassign
+            event.body = JSON.stringify({
+              ...e,
+              payload:
+                typeof e.payload.data === 'string'
+                  ? JSON.parse(e.payload.data)
+                  : e.payload.data,
+            });
+          }
+        }
+
         // based on routeKey, do actions
         switch (event.requestContext.routeKey) {
           case '$connect': {
@@ -306,10 +327,10 @@ export class Server<
                   newConnectionContext = result;
                 }
               } catch (err) {
-                const errorResponse = formatMessage({
-                  type: SERVER_EVENT_TYPES.GQL_ERROR,
-                  payload: { message: err.message },
-                });
+                const errorResponse = formatErrorMessage(
+                  err,
+                  this.subscriptionOptions?.useAppSync,
+                );
 
                 await this.connectionManager.unregisterConnection(connection);
 
@@ -409,10 +430,10 @@ export class Server<
                     newConnectionContext = result;
                   }
                 } catch (err) {
-                  const errorResponse = formatMessage({
-                    type: SERVER_EVENT_TYPES.GQL_ERROR,
-                    payload: { message: err.message },
-                  });
+                  const errorResponse = formatErrorMessage(
+                    err,
+                    this.subscriptionOptions?.useAppSync,
+                  );
 
                   await this.connectionManager.sendToConnection(
                     connection,
@@ -442,7 +463,7 @@ export class Server<
                 connection,
               );
 
-              // send GQL_CONNECTION_INIT message to client
+              // send GQL_CONNECTION_ACK message to client
               const response = formatMessage({
                 type: SERVER_EVENT_TYPES.GQL_CONNECTION_ACK,
               });
@@ -484,10 +505,10 @@ export class Server<
 
             if (!connection.data.isInitialized) {
               // refuse connection which did not send GQL_CONNECTION_INIT operation
-              const errorResponse = formatMessage({
-                type: SERVER_EVENT_TYPES.GQL_ERROR,
-                payload: { message: 'Prohibited connection!' },
-              });
+              const errorResponse = formatErrorMessage(
+                new ConnectionRefusedError('Prohibited connection!'),
+                this.subscriptionOptions?.useAppSync,
+              );
 
               await this.connectionManager.sendToConnection(
                 connection,
@@ -580,12 +601,26 @@ export class Server<
                 statusCode: 200,
               };
             }
+
+            if (this.subscriptionOptions?.useAppSync) {
+              // AppSync start_ack
+              const response = formatMessage({
+                id: (operation as IdentifiedOperationRequest).operationId,
+                type: SERVER_EVENT_TYPES.APPSYNC_START_ACK,
+              });
+              await this.connectionManager.sendToConnection(
+                connection,
+                response,
+              );
+            }
+
             // this is just to make sure
             // when you deploy this using serverless cli
             // then integration response is not assigned to $default route
             // so this won't make any difference
             // but the sendToConnection above will send the response to client
             // so client'll receive the response for his operation
+
             return {
               body: '',
               statusCode: 200,

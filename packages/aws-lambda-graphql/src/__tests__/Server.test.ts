@@ -11,6 +11,7 @@ import { formatMessage } from '../formatMessage';
 import { SERVER_EVENT_TYPES, CLIENT_EVENT_TYPES } from '../protocol';
 import { ConnectionNotFoundError } from '../errors';
 import { MemoryEventProcessor } from '../MemoryEventProcessor';
+import { PubSub } from '../PubSub';
 
 describe('Server', () => {
   describe('createHttpHandler()', () => {
@@ -67,6 +68,109 @@ describe('Server', () => {
           'Content-Type': 'application/json',
         },
         statusCode: 200,
+      });
+    });
+  });
+
+  describe('AppSync createWebSocketHandler', () => {
+    const connectionManager: IConnectionManager = {
+      closeConnection: jest.fn(),
+      registerConnection: jest.fn(),
+      hydrateConnection: jest.fn(),
+      sendToConnection: jest.fn(),
+      setConnectionData: jest.fn(),
+      unregisterConnection: jest.fn(),
+    };
+    const subscriptionManager: ISubscriptionManager = {
+      subscribe: jest.fn(),
+      subscribersByEventName: jest.fn(),
+      unsubscribe: jest.fn(),
+      unsubscribeAllByConnectionId: jest.fn(),
+      unsubscribeOperation: jest.fn(),
+    };
+
+    beforeEach(() => {
+      // eslint-disable-next-line guard-for-in
+      for (const key in connectionManager) {
+        (connectionManager[key] as jest.Mock).mockReset();
+      }
+
+      // eslint-disable-next-line guard-for-in
+      for (const key in subscriptionManager) {
+        (subscriptionManager[key] as jest.Mock).mockReset();
+      }
+    });
+
+    describe('AppSync', () => {
+      it('AppSync Subscription', async () => {
+        const handler = new Server({
+          connectionManager,
+          eventProcessor: new MemoryEventProcessor(),
+          schema: createSchema(),
+          subscriptionManager,
+          subscriptions: {
+            useAppSync: true,
+          },
+          context: {
+            pubSub: new PubSub({
+              eventStore: { publish: async () => {} },
+            }),
+          },
+        }).createWebSocketHandler();
+        const id = ulid();
+
+        (connectionManager.hydrateConnection as jest.Mock).mockResolvedValueOnce(
+          {
+            data: { isInitialized: true },
+          },
+        );
+
+        await expect(
+          handler(
+            {
+              body: formatMessage({
+                id,
+                payload: {
+                  query: /* GraphQL */ `
+                    subscription Test($authorId: ID!) {
+                      textFeed(authorId: $authorId)
+                    }
+                  `,
+                  variables: {
+                    authorId: 'Michael Morpurgo',
+                  },
+                },
+                type: CLIENT_EVENT_TYPES.GQL_START,
+              }),
+              requestContext: {
+                connectionId: '1',
+                domainName: 'domain',
+                routeKey: '$default',
+                stage: 'stage',
+              } as any,
+            } as any,
+            {} as any,
+          ),
+        ).resolves.toEqual(
+          expect.objectContaining({
+            body: '',
+            statusCode: 200,
+          }),
+        );
+
+        expect(connectionManager.hydrateConnection).toHaveBeenCalledTimes(1);
+        expect(connectionManager.hydrateConnection).toHaveBeenCalledWith('1', {
+          retryCount: 1,
+          timeout: 50,
+        });
+        expect(connectionManager.sendToConnection).toHaveBeenCalledTimes(1);
+        expect(connectionManager.sendToConnection).toHaveBeenCalledWith(
+          { data: { isInitialized: true } },
+          formatMessage({
+            id,
+            type: SERVER_EVENT_TYPES.APPSYNC_START_ACK,
+          }),
+        );
       });
     });
   });

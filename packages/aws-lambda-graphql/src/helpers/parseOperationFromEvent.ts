@@ -3,7 +3,7 @@ import {
   GQLStopOperation,
   GQLConnectionInit,
   isGQLConnectionInit,
-  isGQLOperation,
+  isGQLStartOperation,
   isGQLStopOperation,
 } from '../protocol';
 import { ExtendableError } from '../errors';
@@ -41,7 +41,7 @@ export function parseOperationFromEvent(
     return operation;
   }
 
-  if (isGQLOperation(operation)) {
+  if (isGQLStartOperation(operation)) {
     if (operation.id == null) {
       throw new MalformedOperationError('Property id is missing');
     }

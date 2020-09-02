@@ -32,7 +32,8 @@ export class TestLambdaServer {
   constructor({
     port = 3001,
     onConnect,
-  }: { port?: number; onConnect?: any } = {}) {
+    useAppSync,
+  }: { port?: number; onConnect?: any; useAppSync?: boolean } = {}) {
     this.eventStore = new MemoryEventStore();
     this.port = port;
     this.connectionManager = new WebSocketConnectionManager();
@@ -49,6 +50,7 @@ export class TestLambdaServer {
       subscriptionManager: this.subscriptionManager,
       subscriptions: {
         onConnect,
+        useAppSync,
       },
     });
 
