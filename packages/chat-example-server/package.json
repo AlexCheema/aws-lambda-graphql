@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0-alpha.16",
   "dependencies": {
-    "aws-lambda-graphql": "^1.0.0-alpha.16",
+    "aws-lambda-graphql-appsync": "^1.0.0-alpha.16",
     "graphql": "^14.5.8",
     "ulid": "^2.3.0"
   },

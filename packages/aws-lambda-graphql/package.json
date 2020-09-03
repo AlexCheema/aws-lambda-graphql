@@ -4,11 +4,11 @@
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "bugs": {
-    "url": "https://github.com/michalkvasnicak/aws-lambda-graphql/issues"
+    "url": "https://github.com/alexcheema/aws-lambda-graphql/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/michalkvasnicak/aws-lambda-graphql"
+    "url": "https://github.com/alexcheema/aws-lambda-graphql"
   },
   "sideEffects": false,
   "keywords": [
@@ -39,7 +39,7 @@
     "ulid": "^2.3.0"
   },
   "peerDependencies": {
-    "aws-sdk": "^2.387.0",
+    "aws-sdk": "^2.745.0",
     "graphql": "^14.0.2",
     "graphql-subscriptions": "^1.0.0",
     "ioredis": "^4.17.3"
