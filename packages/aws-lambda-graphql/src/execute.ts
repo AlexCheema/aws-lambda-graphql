@@ -128,7 +128,8 @@ export async function execute({
       : context;
 
   // detect operation type
-  const operationAST = getOperationAST(document, operation.operationName || '');
+  // eslint-disable-next-line
+  const operationAST = getOperationAST(document, operation.operationName || null);
 
   const baseParams: ExecutionParams = {
     context: {
