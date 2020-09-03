@@ -40,8 +40,8 @@
   },
   "peerDependencies": {
     "aws-sdk": "^2.745.0",
-    "graphql": "^14.0.2",
-    "graphql-subscriptions": "^1.0.0",
+    "graphql": "^15.3.0",
+    "graphql-subscriptions": "^1.1.0",
     "ioredis": "^4.17.3"
   },
   "engines": {
@@ -52,6 +52,7 @@
     "apollo-cache-inmemory": "^1.6.6",
     "apollo-client": "^2.6.10",
     "apollo-link": "^1.2.11",
+    "aws-appsync": "^3.0.3",
     "aws-appsync-subscription-link": "^2.2.0",
     "graphql-tag": "^2.10.1",
     "graphql-tools": "^4.0.6",

@@ -1,10 +1,7 @@
 import gql from 'graphql-tag';
 import WebSocket from 'ws';
 import { SubscriptionClient } from 'subscriptions-transport-ws';
-import { ApolloLink } from 'apollo-link';
-import { createSubscriptionHandshakeLink } from 'aws-appsync-subscription-link';
-import { ApolloClient } from 'apollo-client';
-import { InMemoryCache } from 'apollo-cache-inmemory';
+import { AWSAppSyncClient } from 'aws-appsync';
 import { TestLambdaServer } from '../fixtures/server';
 import { execute } from '../fixtures/helpers';
 import { start, sleep } from '../helpers/appSyncClientUtil';
@@ -31,20 +28,14 @@ describe('apollo client integration test', () => {
 
   describe('connect', () => {
     it('connects to server', (done) => {
-      const link = ApolloLink.from([
-        createSubscriptionHandshakeLink({
-          url: 'http://localhost:3003',
-          region: 'us-east-1',
-          auth: {
-            type: 'API_KEY',
-            apiKey: '',
-          },
-        }),
-      ]);
-
-      const client = new ApolloClient({
-        cache: new InMemoryCache(),
-        link,
+      const client = new AWSAppSyncClient({
+        url: 'http://localhost:3003',
+        region: 'us-east-1',
+        auth: {
+          type: 'API_KEY',
+          apiKey: '',
+        },
+        disableOffline: true,
       });
 
       const sub = client.subscribe({
@@ -71,37 +62,27 @@ describe('apollo client integration test', () => {
         WebSocket as any,
       );
 
-      const link1 = ApolloLink.from([
-        createSubscriptionHandshakeLink({
-          url: 'http://localhost:3003',
-          region: 'us-east-1',
-          auth: {
-            type: 'API_KEY',
-            apiKey: '',
-          },
-        }),
-      ]);
-      const client1 = new ApolloClient({
-        cache: new InMemoryCache(),
-        link: link1,
+      const client1 = new AWSAppSyncClient({
+        url: 'http://localhost:3003',
+        region: 'us-east-1',
+        auth: {
+          type: 'API_KEY',
+          apiKey: '',
+        },
+        disableOffline: true,
       });
 
-      const link2 = ApolloLink.from([
-        createSubscriptionHandshakeLink({
-          url: 'http://localhost:3003',
-          region: 'us-east-1',
-          auth: {
-            type: 'API_KEY',
-            apiKey: '',
-          },
-        }),
-      ]);
-      const client2 = new ApolloClient({
-        cache: new InMemoryCache(),
-        link: link2,
+      const client2 = new AWSAppSyncClient({
+        url: 'http://localhost:3003',
+        region: 'us-east-1',
+        auth: {
+          type: 'API_KEY',
+          apiKey: '',
+        },
+        disableOffline: true,
       });
 
-      const o1 = await start<{ authorId: string; text: string }>(
+      const sub1 = await start<{ authorId: string; text: string }>(
         client1.subscribe({
           query: gql`
             subscription Test($authorId: ID!) {
@@ -113,7 +94,7 @@ describe('apollo client integration test', () => {
           },
         }),
       );
-      const o2 = await start<{ authorId: string; text: string }>(
+      const sub2 = await start<{ authorId: string; text: string }>(
         client2.subscribe({
           query: gql`
             subscription Test($authorId: ID!) {
@@ -152,11 +133,11 @@ describe('apollo client integration test', () => {
       // wait for event processor to process events
       await sleep(500);
 
-      expect(await o1.next()).toEqual('Test1');
-      expect(await o1.next()).toEqual('Test3');
+      expect(await sub1.next()).toEqual('Test1');
+      expect(await sub1.next()).toEqual('Test3');
 
-      expect(await o2.next()).toEqual('Test2');
-      expect(await o2.next()).toEqual('Test4');
-    }, 30000);
+      expect(await sub2.next()).toEqual('Test2');
+      expect(await sub2.next()).toEqual('Test4');
+    });
   });
 });
