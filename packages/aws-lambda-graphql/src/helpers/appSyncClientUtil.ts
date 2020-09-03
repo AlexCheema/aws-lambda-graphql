@@ -29,6 +29,10 @@ export async function start<T>(
   const itemBuffer: T[] = [];
   const subscription = observable.subscribe(
     (msg) => {
+      if (!msg.data)
+        throw new Error(
+          `Malformed subscription message: ${JSON.stringify(msg)}`,
+        );
       itemBuffer.push(Object.values(msg.data)[0]);
     },
     // eslint-disable-next-line no-console
