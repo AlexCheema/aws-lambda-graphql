@@ -35,11 +35,11 @@
     "@types/ioredis": "^4.16.6",
     "apollo-server-core": "^2.9.14",
     "apollo-server-lambda": "^2.9.14",
+    "aws-sdk": "^2.746.0",
     "iterall": "^1.2.2",
     "ulid": "^2.3.0"
   },
   "peerDependencies": {
-    "aws-sdk": "^2.745.0",
     "graphql": "^15.3.0",
     "graphql-subscriptions": "^1.1.0",
     "ioredis": "^4.17.3"
