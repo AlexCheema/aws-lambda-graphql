@@ -7,7 +7,7 @@ import { ApolloClient } from 'apollo-client';
 import { InMemoryCache } from 'apollo-cache-inmemory';
 import { TestLambdaServer } from '../fixtures/server';
 import { execute } from '../fixtures/helpers';
-import { start, sleep } from './AppSyncClientUtil';
+import { start, sleep } from '../helpers/appSyncClientUtil';
 
 require('isomorphic-fetch');
 // @ts-ignore
