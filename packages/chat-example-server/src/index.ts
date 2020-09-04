@@ -6,7 +6,7 @@ import {
   PubSub,
   Server,
   withFilter,
-} from 'aws-lambda-graphql';
+} from 'aws-lambda-graphql-appsync';
 import { ApiGatewayManagementApi, DynamoDB } from 'aws-sdk';
 import * as assert from 'assert';
 import { ulid } from 'ulid';
